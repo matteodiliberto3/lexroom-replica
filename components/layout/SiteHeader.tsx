@@ -16,7 +16,7 @@ import { siteConfig } from "@/lib/site-config";
 
 function DropdownPanel({ menu }: { menu: NavDropdown }) {
   return (
-    <div className="absolute left-0 top-full z-40 hidden min-w-[34rem] rounded-2xl border border-white/10 bg-brand-dark/95 p-6 shadow-2xl backdrop-blur-md group-hover:block group-focus-within:block">
+    <div className="absolute left-0 top-full z-40 hidden min-w-0 max-w-[min(36rem,calc(100vw-1.5rem))] rounded-2xl border border-white/10 bg-brand-dark/95 p-5 shadow-2xl backdrop-blur-md sm:p-6 group-hover:block group-focus-within:block xl:max-w-[min(42rem,calc(100vw-2rem))]">
       <motion.div
         className="grid gap-6 md:grid-cols-2 xl:grid-cols-3"
         initial={{ opacity: 0, y: 8 }}
@@ -88,7 +88,7 @@ export function SiteHeader() {
             : "bg-brand shadow-md",
       )}
     >
-      <div className="container-shell flex h-full items-center justify-between gap-4">
+      <div className="container-shell flex h-full w-full min-w-0 items-center justify-between gap-2 sm:gap-3">
         <Link href="/en" className="relative z-10 inline-flex shrink-0 items-center">
           <motion.div
             animate={{ scale: isScrolled ? 0.92 : 1 }}
@@ -100,45 +100,58 @@ export function SiteHeader() {
               width={132}
               height={28}
               priority
+              className="h-6 w-auto lg:h-7"
             />
           </motion.div>
         </Link>
 
-        <nav className="hidden items-center gap-6 lg:flex" aria-label="Primary">
-          {primaryNavigation.map((menu) => (
-            <motion.div
-              key={menu.label}
-              className="group relative"
-              animate={{ opacity: isScrolled ? 0.95 : 1 }}
-            >
-              <button
-                type="button"
-                className="nav-link inline-flex items-center gap-2"
-                aria-haspopup="true"
+        <div className="hidden min-w-0 flex-1 items-center gap-2 lg:flex xl:gap-3">
+          <nav
+            className="flex min-w-0 flex-1 items-center justify-center gap-x-2 overflow-x-auto whitespace-nowrap [scrollbar-width:none] xl:gap-x-3 2xl:gap-x-4 [&::-webkit-scrollbar]:hidden"
+            aria-label="Primary"
+          >
+            {primaryNavigation.map((menu) => (
+              <motion.div
+                key={menu.label}
+                className="group relative shrink-0"
+                animate={{ opacity: isScrolled ? 0.95 : 1 }}
               >
-                {menu.label}
-                <span aria-hidden="true">▾</span>
-              </button>
-              <DropdownPanel menu={menu} />
-            </motion.div>
-          ))}
-          {anchorNavigation.map((link) => (
-            <a key={link.label} href={link.href} className="nav-link">
-              {link.label}
-            </a>
-          ))}
-        </nav>
-
-        <div className="hidden items-center gap-3 lg:flex">
-          <Button variant="secondary" href={siteConfig.external.login}>
-            Login
-          </Button>
-          <Button variant="secondary" href="#demo">
-            Try Lexroom
-          </Button>
-          <Button variant="primary" href="#demo">
-            Book a demo
-          </Button>
+                <button
+                  type="button"
+                  className="nav-link nav-link-header inline-flex items-center gap-1.5 px-0.5"
+                  aria-haspopup="true"
+                >
+                  {menu.label}
+                  <span aria-hidden="true" className="text-[0.65em] opacity-80">
+                    ▾
+                  </span>
+                </button>
+                <DropdownPanel menu={menu} />
+              </motion.div>
+            ))}
+            {anchorNavigation.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className="nav-link nav-link-header shrink-0 px-0.5"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+          <div className="flex shrink-0 items-center gap-1.5 xl:gap-2 2xl:gap-2.5">
+            <Button variant="secondary" href={siteConfig.external.login} compact>
+              Login
+            </Button>
+            <span className="hidden 2xl:contents">
+              <Button variant="secondary" href="#demo" compact>
+                Try Lexroom
+              </Button>
+            </span>
+            <Button variant="primary" href="#demo" compact>
+              Book a demo
+            </Button>
+          </div>
         </div>
 
         <button

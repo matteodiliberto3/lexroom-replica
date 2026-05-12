@@ -72,7 +72,7 @@ export function HeroSection() {
   const [isOpen, setIsOpen] = useState(false);
   const [backdropVisible, setBackdropVisible] = useState(false);
   const [iframeSrc, setIframeSrc] = useState<string | null>(null);
-  const magneticRef = useMagneticProximity<HTMLDivElement>({
+  const magneticRef = useMagneticProximity<HTMLSpanElement>({
     maxMovementX: 7,
     maxMovementY: 7,
     triggerRadius: 160,
@@ -248,15 +248,17 @@ export function HeroSection() {
                 aria-label="Play Lexroom video"
                 onClick={openVideo}
               >
-                <div ref={magneticRef} className="reb-hero-magnetic-arrow-wrapper">
-                  <Image
-                    src={siteConfig.assets.videoPlay}
-                    alt=""
-                    width={88}
-                    height={88}
-                    className="reb-hero-magnetic-arrow"
-                  />
-                </div>
+                <span className="reb-hero-magnetic-arrow-wrapper" aria-hidden="true">
+                  <span ref={magneticRef} className="reb-hero-magnetic-play">
+                    <Image
+                      src={siteConfig.assets.videoPlay}
+                      alt=""
+                      width={88}
+                      height={88}
+                      className="reb-hero-magnetic-arrow"
+                    />
+                  </span>
+                </span>
               </button>
 
               <Image

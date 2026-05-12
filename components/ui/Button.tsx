@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { useMagneticProximity } from "@/hooks/useMagneticProximity";
 import { cn } from "@/lib/cn";
 
 type ButtonVariant = "primary" | "secondary" | "secondaryDark";
@@ -10,6 +9,7 @@ type ButtonVariant = "primary" | "secondary" | "secondaryDark";
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
   href?: string;
+  compact?: boolean;
   children: ReactNode;
 };
 
@@ -35,29 +35,21 @@ export function Button({
   href,
   children,
   className,
+  compact = false,
   type = "button",
   ...props
 }: ButtonProps) {
-  const magneticRef = useMagneticProximity<HTMLSpanElement>({
-    maxMovementX: 6,
-    maxMovementY: 6,
-    triggerRadius: 140,
-    attractionForce: 0.18,
-    lerpSpeed: 0.14,
-  });
-
   const classes = cn(
     variantClass[variant],
     "relative isolate overflow-hidden",
+    compact && "btn-compact",
     className,
   );
 
   const content = (
     <>
       <ButtonShimmer />
-      <span ref={magneticRef} className="relative z-10 inline-flex items-center gap-2">
-        {children}
-      </span>
+      <span className="relative z-10 inline-flex items-center gap-2">{children}</span>
     </>
   );
 
