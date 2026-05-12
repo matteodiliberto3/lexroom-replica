@@ -3,12 +3,14 @@ import { Inter } from "next/font/google";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { GrainyOverlay } from "@/components/ui/GrainyOverlay";
 import { siteConfig } from "@/lib/site-config";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -33,6 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} h-full`}>
       <body className="min-h-full flex flex-col antialiased">
+        <GrainyOverlay />
         <AnnouncementBar />
         <SiteHeader />
         <div className="flex-1">{children}</div>
