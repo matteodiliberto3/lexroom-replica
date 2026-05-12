@@ -125,6 +125,22 @@ export function HeroSection() {
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted) {
+        return;
+      }
+
+      document.body.style.overflow = "";
+      setIsOpen(false);
+      setBackdropVisible(false);
+      setIframeSrc(null);
+    };
+
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   return (
     <div className="reb-hero-experience">
       <div className="reb-fixed-hero-bg" aria-hidden="true" />

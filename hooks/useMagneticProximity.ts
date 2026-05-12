@@ -95,11 +95,23 @@ export function useMagneticProximity<T extends HTMLElement>(
     window.addEventListener("resize", updateCenter);
     window.addEventListener("scroll", updateCenter, { passive: true });
 
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        updateCenter();
+        element.style.transform = "";
+        currentX = 0;
+        currentY = 0;
+      }
+    };
+
+    window.addEventListener("pageshow", onPageShow);
+
     return () => {
       window.cancelAnimationFrame(frameId);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("resize", updateCenter);
       window.removeEventListener("scroll", updateCenter);
+      window.removeEventListener("pageshow", onPageShow);
       element.style.transform = "";
     };
   }, [

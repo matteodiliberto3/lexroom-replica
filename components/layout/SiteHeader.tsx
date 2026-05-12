@@ -59,26 +59,42 @@ export function SiteHeader() {
   const isHeroOverlay = pathname === "/en" || pathname === "/";
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [layoutEpoch, setLayoutEpoch] = useState(0);
 
   useEffect(() => {
-    const onScroll = () => {
+    const syncScroll = () => {
       setIsScrolled(window.scrollY > 12);
     };
 
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    syncScroll();
+    window.addEventListener("scroll", syncScroll, { passive: true });
+
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted) {
+        return;
+      }
+
+      syncScroll();
+      requestAnimationFrame(() => {
+        syncScroll();
+        window.dispatchEvent(new Event("resize"));
+        setLayoutEpoch((n) => n + 1);
+      });
+    };
+
+    window.addEventListener("pageshow", onPageShow);
+
+    return () => {
+      window.removeEventListener("scroll", syncScroll);
+      window.removeEventListener("pageshow", onPageShow);
+    };
   }, []);
 
   return (
-    <motion.header
-      initial={false}
-      animate={{
-        height: isScrolled ? "3.5rem" : "5rem",
-      }}
-      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+    <header
+      key={layoutEpoch}
       className={cn(
-        "sticky top-0 z-50 text-white",
+        "sticky top-0 z-50 text-white transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
         isHeroOverlay
           ? isScrolled
             ? "border-b border-white/10 bg-brand/78 shadow-[0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md"
@@ -88,9 +104,15 @@ export function SiteHeader() {
             : "bg-brand shadow-md",
       )}
     >
-      <div className="container-shell flex h-full w-full min-w-0 items-center justify-between gap-2 sm:gap-3">
+      <div
+        className={cn(
+          "container-shell flex w-full min-w-0 items-center justify-between gap-2 transition-[min-height,height] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] sm:gap-3",
+          isScrolled ? "min-h-14 h-14" : "min-h-20 h-20",
+        )}
+      >
         <Link href="/en" className="relative z-10 inline-flex shrink-0 items-center">
           <motion.div
+            initial={false}
             animate={{ scale: isScrolled ? 0.92 : 1 }}
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
           >
@@ -105,15 +127,16 @@ export function SiteHeader() {
           </motion.div>
         </Link>
 
-        <div className="hidden min-w-0 flex-1 items-center gap-2 lg:flex xl:gap-3">
+        <div className="hidden min-h-0 min-w-0 flex-1 items-center gap-2 lg:flex xl:gap-3">
           <nav
-            className="flex min-w-0 flex-1 items-center justify-center gap-x-2 overflow-x-auto whitespace-nowrap [scrollbar-width:none] xl:gap-x-3 2xl:gap-x-4 [&::-webkit-scrollbar]:hidden"
+            className="flex min-h-0 min-w-0 flex-1 items-center justify-center gap-x-2 overflow-x-auto whitespace-nowrap [scrollbar-width:none] xl:gap-x-3 2xl:gap-x-4 [&::-webkit-scrollbar]:hidden"
             aria-label="Primary"
           >
             {primaryNavigation.map((menu) => (
               <motion.div
                 key={menu.label}
                 className="group relative shrink-0"
+                initial={false}
                 animate={{ opacity: isScrolled ? 0.95 : 1 }}
               >
                 <button
@@ -143,11 +166,11 @@ export function SiteHeader() {
             <Button variant="secondary" href={siteConfig.external.login} compact>
               Login
             </Button>
-            <span className="hidden 2xl:contents">
+            <div className="hidden shrink-0 2xl:flex">
               <Button variant="secondary" href="#demo" compact>
                 Try Lexroom
               </Button>
-            </span>
+            </div>
             <Button variant="primary" href="#demo" compact>
               Book a demo
             </Button>
@@ -156,7 +179,7 @@ export function SiteHeader() {
 
         <button
           type="button"
-          className="relative z-10 inline-flex items-center justify-center rounded-full border border-white/20 p-2 lg:hidden"
+          className="relative z-10 inline-flex shrink-0 items-center justify-center rounded-full border border-white/20 p-2 lg:hidden"
           aria-expanded={mobileOpen}
           aria-controls="mobile-navigation"
           onClick={() => setMobileOpen((open) => !open)}
@@ -236,6 +259,6 @@ export function SiteHeader() {
           </div>
         </nav>
       ) : null}
-    </motion.header>
+    </header>
   );
 }
