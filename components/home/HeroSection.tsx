@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { hero } from "@/content/en/home";
 import { useMagneticProximity } from "@/hooks/useMagneticProximity";
@@ -37,12 +38,56 @@ function HeroPlayIcon() {
   );
 }
 
+const heroEase = [0.22, 1, 0.36, 1] as const;
+
+const copyContainer = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.09,
+      delayChildren: 0.08,
+    },
+  },
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 22 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.68, ease: heroEase },
+  },
+};
+
+const dividerReveal = {
+  hidden: { opacity: 0, scaleX: 0.15 },
+  visible: {
+    opacity: 1,
+    scaleX: 1,
+    transition: { duration: 0.72, ease: heroEase },
+  },
+};
+
 export function HeroSection() {
   const [isOpen, setIsOpen] = useState(false);
   const [backdropVisible, setBackdropVisible] = useState(false);
   const [iframeSrc, setIframeSrc] = useState<string | null>(null);
-  const magneticRef = useMagneticProximity<HTMLDivElement>();
+  const magneticRef = useMagneticProximity<HTMLDivElement>({
+    maxMovementX: 7,
+    maxMovementY: 7,
+    triggerRadius: 160,
+    attractionForce: 0.2,
+    lerpSpeed: 0.15,
+  });
   const marqueeLogos = [...siteConfig.clientLogos, ...siteConfig.clientLogos];
+
+  const { scrollY } = useScroll();
+
+  const rectY = useTransform(scrollY, [0, 520], [0, -36]);
+  const logoY = useTransform(scrollY, [0, 520], [0, -52]);
+  const logoOpacity = useTransform(scrollY, [0, 420], [0.38, 0.12]);
+  const videoScale = useTransform(scrollY, [80, 480], [1, 0.97]);
+  const videoY = useTransform(scrollY, [0, 400], [0, 12]);
 
   const openVideo = useCallback(() => {
     setIsOpen(true);
@@ -83,6 +128,7 @@ export function HeroSection() {
   return (
     <div className="reb-hero-experience">
       <div className="reb-fixed-hero-bg" aria-hidden="true" />
+      <div className="reb-hero-bottom-fade" aria-hidden="true" />
 
       <div className="reb-hero-wrapper">
         <header className="reb-hero-section">
@@ -92,21 +138,35 @@ export function HeroSection() {
                 <div className="reb-hero-component">
                   <div className="reb-hero-component-inner">
                     <div className="reb-hero-copy">
-                      <div className="reb-hero-copy-inner">
-                        <h1 className="reb-hero-section-title">
+                      <motion.div
+                        className="reb-hero-copy-inner"
+                        variants={copyContainer}
+                        initial="hidden"
+                        animate="visible"
+                      >
+                        <motion.h1 className="reb-hero-section-title" variants={fadeUp}>
                           {hero.title}{" "}
                           <em>{hero.titleEmphasis}</em> {hero.titleSuffix}
-                        </h1>
-                        <div className="reb-hero-divider" />
-                        <div className="reb-hero-description">
+                        </motion.h1>
+                        <motion.div
+                          className="reb-hero-divider"
+                          variants={dividerReveal}
+                        />
+                        <motion.div className="reb-hero-description" variants={fadeUp}>
                           <p className="reb-hero-subtitle">{hero.subtitle}</p>
                           <p className="reb-hero-lead">{hero.description}</p>
-                        </div>
-                        <div className="reb-hero-buttons-wrapper">
+                        </motion.div>
+                        <motion.div className="reb-hero-buttons-wrapper" variants={fadeUp}>
                           <div className="reb-hero-buttons">
-                            <a href="#demo" className="reb-hero-button reb-hero-button-primary">
+                            <motion.a
+                              href="#demo"
+                              className="reb-hero-button reb-hero-button-primary"
+                              whileHover={{ y: -1 }}
+                              whileTap={{ scale: 0.97 }}
+                              transition={{ type: "spring", stiffness: 420, damping: 28 }}
+                            >
                               {hero.primaryCta}
-                            </a>
+                            </motion.a>
                             <button
                               type="button"
                               className="reb-hero-button reb-hero-button-secondary hidden"
@@ -117,27 +177,35 @@ export function HeroSection() {
                             </button>
                           </div>
                           <div className="reb-hero-buttons-line" aria-hidden="true" />
-                        </div>
-                      </div>
+                        </motion.div>
+                      </motion.div>
                     </div>
                   </div>
 
-                  <Image
-                    src={siteConfig.assets.heroBackRect}
-                    alt=""
-                    width={1164}
-                    height={760}
-                    className="reb-hero-back-rect"
-                    priority
-                  />
-                  <Image
-                    src={siteConfig.assets.heroBackLogo}
-                    alt=""
-                    width={1305}
-                    height={900}
-                    className="reb-hero-back-logo"
-                    priority
-                  />
+                  <div className="reb-hero-back-rect pointer-events-none">
+                    <motion.div style={{ y: rectY }}>
+                      <Image
+                        src={siteConfig.assets.heroBackRect}
+                        alt=""
+                        width={1164}
+                        height={760}
+                        className="h-auto w-full max-w-none"
+                        priority
+                      />
+                    </motion.div>
+                  </div>
+                  <div className="reb-hero-back-logo pointer-events-none">
+                    <motion.div style={{ y: logoY, opacity: logoOpacity }}>
+                      <Image
+                        src={siteConfig.assets.heroBackLogo}
+                        alt=""
+                        width={1305}
+                        height={900}
+                        className="h-auto w-full"
+                        priority
+                      />
+                    </motion.div>
+                  </div>
                   <button
                     type="button"
                     className="reb-hero-video-preview-mobile"
@@ -162,11 +230,18 @@ export function HeroSection() {
 
       <div className="reb-center-wrapper">
         <div className="reb-center-wrapper-inner">
-          <section
-            className="reb-home-video-section"
-            aria-label="Lexroom product video"
-          >
-            <div className={`reb-hero-video-wrapper${isOpen ? " is-open" : ""}`}>
+          <section className="reb-home-video-section" aria-label="Lexroom product video">
+            <motion.div
+              className={`reb-hero-video-wrapper${isOpen ? " is-open" : ""}`}
+              style={
+                isOpen
+                  ? undefined
+                  : {
+                      scale: videoScale,
+                      y: videoY,
+                    }
+              }
+            >
               <button
                 type="button"
                 className="reb-hero-video-transparent-cover"
@@ -216,7 +291,7 @@ export function HeroSection() {
               >
                 <span aria-hidden="true">×</span>
               </button>
-            </div>
+            </motion.div>
           </section>
 
           <section className="reb-home-logos-section" aria-label="Trusted by">

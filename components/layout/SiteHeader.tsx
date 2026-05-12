@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import {
@@ -54,6 +55,8 @@ function DropdownPanel({ menu }: { menu: NavDropdown }) {
 }
 
 export function SiteHeader() {
+  const pathname = usePathname();
+  const isHeroOverlay = pathname === "/en" || pathname === "/";
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -76,9 +79,13 @@ export function SiteHeader() {
       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
         "sticky top-0 z-50 text-white",
-        isScrolled
-          ? "border-b border-primary/10 bg-brand/80 shadow-sm backdrop-blur-md"
-          : "bg-brand shadow-md",
+        isHeroOverlay
+          ? isScrolled
+            ? "border-b border-white/10 bg-brand/78 shadow-[0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md"
+            : "border-b border-transparent bg-transparent shadow-none"
+          : isScrolled
+            ? "border-b border-primary/10 bg-brand/80 shadow-sm backdrop-blur-md"
+            : "bg-brand shadow-md",
       )}
     >
       <div className="container-shell flex h-full items-center justify-between gap-4">
