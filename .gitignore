@@ -24,6 +24,10 @@
 .DS_Store
 *.pem
 
+# IDE / servizi locali
+.cursor/
+.cloud/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

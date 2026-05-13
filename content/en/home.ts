@@ -39,9 +39,10 @@ export const about = {
 };
 
 export const promoPlaceholder = {
-  title: "Title",
-  description: "Desc",
-  cta: "Prenota una demo",
+  title: "Built with leading firms",
+  description:
+    "Practice-area depth, accurate terminology, and workflows shaped alongside international law firms.",
+  cta: "Book a demo",
 };
 
 export const features = {
@@ -191,7 +192,7 @@ export const supportLine = {
 };
 
 export const compliance = {
-  heading: "Lexroom aderisce ai migliori standard di sicurezza",
+  heading: "Lexroom meets the highest security standards",
   badges: [
     { title: "GDPR", subtitle: "Compliant" },
     { title: "GDPR & AI Act", subtitle: "Compliant" },

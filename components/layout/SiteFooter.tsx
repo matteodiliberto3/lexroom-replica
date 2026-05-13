@@ -80,7 +80,7 @@ export function SiteFooter() {
 
         <div className="mt-10 border-t border-white/10 pt-8 text-sm text-white/70">
           <p>
-            Copyright: © 2025 Lexroom Srl. All rights reserved. The new legal
+            Copyright: © 2026 Lexroom Srl. All rights reserved. The new legal
             standard.
           </p>
           <p className="mt-2">

@@ -76,6 +76,7 @@ export function Button({
     onTransitionEnd,
     ...buttonProps
   } = props;
+  void [onDrag, onDragStart, onDragEnd, onAnimationStart, onAnimationEnd, onTransitionEnd];
 
   return (
     <motion.button

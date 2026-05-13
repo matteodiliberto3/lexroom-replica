@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
 :root {
+  /* Motion / UI easing (design-engineering: stronger than browser defaults) */
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+
   --background: #f4f4f5;
   --foreground: #0f172a;
   --surface: #ffffff;
@@ -105,6 +109,27 @@ textarea {
   box-shadow: var(--shadow-soft);
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .feature-bento-card {
+    transition:
+      transform 220ms var(--ease-out-strong),
+      box-shadow 220ms var(--ease-out-strong);
+  }
+
+  .feature-bento-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 28px 70px rgba(15, 76, 157, 0.14);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feature-bento-card,
+  .feature-bento-card:hover {
+    transform: none;
+    transition: box-shadow 200ms var(--ease-out-strong);
+  }
+}
+
 .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -115,7 +140,7 @@ textarea {
   color: white;
   padding: 0.875rem 1.5rem;
   font-weight: 600;
-  transition: background-color 0.2s ease;
+  transition: background-color 180ms var(--ease-out-strong);
 }
 
 .btn-primary:hover {
@@ -123,7 +148,13 @@ textarea {
 }
 
 .btn-shimmer {
-  animation: btn-shimmer-pass 3s ease-in-out infinite;
+  animation: btn-shimmer-pass 3s var(--ease-in-out-strong) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-shimmer {
+    animation: none;
+  }
 }
 
 .btn-primary:hover .btn-shimmer,
@@ -156,7 +187,9 @@ textarea {
   color: white;
   padding: 0.75rem 1.25rem;
   font-weight: 600;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background-color 180ms var(--ease-out-strong),
+    border-color 180ms var(--ease-out-strong);
 }
 
 .btn-secondary:hover {
@@ -219,7 +252,7 @@ textarea {
 .nav-link {
   color: var(--brand-soft);
   font-weight: 500;
-  transition: color 0.2s ease;
+  transition: color 180ms var(--ease-out-strong);
 }
 
 .nav-link:hover,
@@ -269,7 +302,9 @@ textarea {
 
 .reb-hero-experience {
   position: relative;
-  overflow: hidden;
+  /* Allow position:fixed video modal to escape; clip horizontal bleed only */
+  overflow-x: hidden;
+  overflow-y: visible;
   margin-top: -5rem;
   padding-top: 5rem;
   background: var(--brand);
@@ -307,10 +342,23 @@ textarea {
   background: var(--background);
 }
 
+.reb-hero-scroll-stage {
+  position: relative;
+}
+
 .reb-hero-wrapper,
 .reb-center-wrapper {
   position: relative;
   z-index: 1;
+}
+
+.reb-home-video-section {
+  position: relative;
+  z-index: 4;
+}
+
+.reb-hero-video-wrapper:not(.reb-hero-video-wrapper--inline-ghost) {
+  will-change: transform;
 }
 
 .reb-hero-section {
@@ -421,10 +469,10 @@ textarea {
   border-radius: 9999px;
   font-weight: 600;
   transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease;
+    background-color 180ms var(--ease-out-strong),
+    border-color 180ms var(--ease-out-strong),
+    color 180ms var(--ease-out-strong),
+    transform 160ms var(--ease-out-strong);
 }
 
 .reb-hero-button-primary {
@@ -445,10 +493,6 @@ textarea {
   border: 1px solid rgba(255, 255, 255, 0.35);
   background: rgba(255, 255, 255, 0.08);
   color: white;
-}
-
-.reb-hero-button-secondary.hidden {
-  display: none;
 }
 
 .reb-hero-button-secondary:hover {
@@ -537,7 +581,15 @@ textarea {
   display: flex;
   width: max-content;
   gap: 3rem;
-  animation: reb-logos-marquee 40s linear infinite;
+  animation: reb-logos-marquee 32s linear infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reb-logos-track {
+    animation: none;
+    transform: none;
+  }
 }
 
 .reb-logos-wrapper {
@@ -577,7 +629,7 @@ textarea {
   transform-origin: center center;
   transition:
     box-shadow 1.2s cubic-bezier(0.19, 1, 0.22, 1),
-    border-color 0.35s ease;
+    border-color 320ms var(--ease-out-strong);
   z-index: 2;
 }
 
@@ -585,7 +637,7 @@ textarea {
   position: fixed;
   top: 50%;
   left: 50%;
-  z-index: 9999;
+  z-index: 10000;
   width: 90vw;
   max-width: 1400px;
   height: auto;
@@ -593,6 +645,12 @@ textarea {
   aspect-ratio: 16 / 9;
   transform: translate(-50%, -50%);
   box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+}
+
+/* In-flow preview hidden while modal plays (space preserved for layout) */
+.reb-hero-video-wrapper--inline-ghost {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .reb-hero-video-transparent-cover {
@@ -615,7 +673,6 @@ textarea {
 
 .reb-hero-magnetic-play {
   display: block;
-  will-change: transform;
 }
 
 .reb-hero-magnetic-arrow {
@@ -657,12 +714,12 @@ textarea {
 .video-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 9998;
+  z-index: 9999;
   border: 0;
   padding: 0;
   opacity: 0;
   background-color: rgba(0, 0, 0, 0.9);
-  transition: opacity 0.8s ease;
+  transition: opacity 280ms var(--ease-out-strong);
   cursor: pointer;
   pointer-events: none;
 }
@@ -676,7 +733,7 @@ textarea {
   position: absolute;
   top: 1.25rem;
   right: 1.25rem;
-  z-index: 10001;
+  z-index: 10002;
   display: flex;
   width: 3.125rem;
   height: 3.125rem;
@@ -691,7 +748,14 @@ textarea {
   opacity: 0;
   pointer-events: none;
   cursor: pointer;
-  transition: opacity 0.3s ease 0.8s;
+  transition: opacity 200ms var(--ease-out-strong) 140ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .video-close-btn {
+    transition-delay: 0ms;
+    transition-duration: 120ms;
+  }
 }
 
 .reb-hero-video-wrapper.is-open .video-close-btn {

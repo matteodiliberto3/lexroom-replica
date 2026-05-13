@@ -1,10 +1,19 @@
 "use client";
 
 import Image from "next/image";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useCallback, useEffect, useState } from "react";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+} from "framer-motion";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import type { MouseEvent } from "react";
+import { createPortal } from "react-dom";
 import { hero } from "@/content/en/home";
-import { useMagneticProximity } from "@/hooks/useMagneticProximity";
+import { MagneticPlayArrow } from "@/components/home/MagneticPlayArrow";
+import { cn } from "@/lib/cn";
 import { siteConfig } from "@/lib/site-config";
 
 function buildAutoplayUrl(baseUrl: string) {
@@ -68,26 +77,88 @@ const dividerReveal = {
   },
 };
 
+/** Four copies for a seamless marquee loop (translateX -50%). */
+const marqueeLogos = Array.from({ length: 4 }, () => siteConfig.clientLogos).flat();
+
+function VideoModalPortal({
+  iframeSrc,
+  backdropVisible,
+  onCloseBackdrop,
+  onCloseButton,
+}: {
+  iframeSrc: string;
+  backdropVisible: boolean;
+  onCloseBackdrop: () => void;
+  onCloseButton: (event: MouseEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <>
+      <button
+        type="button"
+        className={cn("video-backdrop", backdropVisible && "is-visible")}
+        aria-label="Close video"
+        onClick={onCloseBackdrop}
+      />
+      <div className="reb-hero-video-wrapper is-open">
+        <div className="vimeo-container">
+          <iframe
+            id="vimeo-player-portal"
+            src={iframeSrc}
+            title="Lexroom product video"
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+        <button
+          type="button"
+          className="video-close-btn"
+          aria-label="Close video"
+          onClick={onCloseButton}
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+    </>
+  );
+}
+
 export function HeroSection() {
+  const isClient = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [backdropVisible, setBackdropVisible] = useState(false);
   const [iframeSrc, setIframeSrc] = useState<string | null>(null);
-  const magneticRef = useMagneticProximity<HTMLSpanElement>({
-    maxMovementX: 7,
-    maxMovementY: 7,
-    triggerRadius: 160,
-    attractionForce: 0.2,
-    lerpSpeed: 0.15,
+
+  const scrollStageRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useReducedMotion();
+  const { scrollYProgress } = useScroll({
+    target: scrollStageRef,
+    offset: ["start start", "end start"],
   });
-  const marqueeLogos = [...siteConfig.clientLogos, ...siteConfig.clientLogos];
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 46,
+    damping: 18,
+    mass: 0.3,
+    restDelta: 0.0012,
+  });
+  const stageProgress = prefersReducedMotion === true ? scrollYProgress : smoothProgress;
 
-  const { scrollY } = useScroll();
-
-  const rectY = useTransform(scrollY, [0, 520], [0, -36]);
-  const logoY = useTransform(scrollY, [0, 520], [0, -52]);
-  const logoOpacity = useTransform(scrollY, [0, 420], [0.38, 0.12]);
-  const videoScale = useTransform(scrollY, [80, 480], [1, 0.97]);
-  const videoY = useTransform(scrollY, [0, 400], [0, 12]);
+  /** Player rises into view while headline recedes (Lexroom-style scroll choreography). */
+  const videoY = useTransform(stageProgress, [0, 0.26, 0.48, 0.72, 1], [88, 40, -6, -54, -72]);
+  const videoScale = useTransform(stageProgress, [0, 0.2, 0.5, 0.82, 1], [0.87, 0.93, 1, 1.02, 1.03]);
+  const videoTransform = useTransform([videoScale, videoY], ([scale, y]) => {
+    const s = typeof scale === "number" ? scale : 1;
+    const yy = typeof y === "number" ? y : 0;
+    return `translate3d(0, ${yy.toFixed(2)}px, 0) scale(${s.toFixed(4)})`;
+  });
+  const copyOpacity = useTransform(stageProgress, [0, 0.18, 0.42, 0.68, 1], [1, 0.96, 0.62, 0.34, 0.26]);
+  const copyY = useTransform(stageProgress, [0, 1], [0, 40]);
+  const rectY = useTransform(stageProgress, [0, 0.5, 1], [0, -32, -44]);
+  const logoY = useTransform(stageProgress, [0, 0.5, 1], [0, -48, -62]);
+  const logoOpacity = useTransform(stageProgress, [0, 0.38, 0.7, 1], [0.38, 0.2, 0.1, 0.07]);
 
   const openVideo = useCallback(() => {
     setIsOpen(true);
@@ -103,7 +174,7 @@ export function HeroSection() {
     setBackdropVisible(false);
     window.setTimeout(() => {
       setIframeSrc(null);
-    }, 800);
+    }, 360);
   }, []);
 
   useEffect(() => {
@@ -141,13 +212,29 @@ export function HeroSection() {
     return () => window.removeEventListener("pageshow", onPageShow);
   }, []);
 
+  const modal =
+    isClient && isOpen && iframeSrc ? (
+      <VideoModalPortal
+        iframeSrc={iframeSrc}
+        backdropVisible={backdropVisible}
+        onCloseBackdrop={closeVideo}
+        onCloseButton={(event) => {
+          event.stopPropagation();
+          closeVideo();
+        }}
+      />
+    ) : null;
+
   return (
     <div className="reb-hero-experience">
+      {modal ? createPortal(modal, document.body) : null}
+
       <div className="reb-fixed-hero-bg" aria-hidden="true" />
       <div className="reb-hero-bottom-fade" aria-hidden="true" />
 
-      <div className="reb-hero-wrapper">
-        <header className="reb-hero-section">
+      <div ref={scrollStageRef} className="reb-hero-scroll-stage">
+        <div className="reb-hero-wrapper">
+          <header className="reb-hero-section">
           <div className="reb-hero-padding-global">
             <div className="reb-container-large">
               <div className="reb-padding-section-hero">
@@ -156,10 +243,13 @@ export function HeroSection() {
                     <div className="reb-hero-copy">
                       <motion.div
                         className="reb-hero-copy-inner"
-                        variants={copyContainer}
-                        initial="hidden"
-                        animate="visible"
+                        style={{ opacity: copyOpacity, y: copyY }}
                       >
+                        <motion.div
+                          variants={copyContainer}
+                          initial="hidden"
+                          animate="visible"
+                        >
                         <motion.h1 className="reb-hero-section-title" variants={fadeUp}>
                           {hero.title}{" "}
                           <em>{hero.titleEmphasis}</em> {hero.titleSuffix}
@@ -183,18 +273,22 @@ export function HeroSection() {
                             >
                               {hero.primaryCta}
                             </motion.a>
-                            <button
+                            <motion.button
                               type="button"
-                              className="reb-hero-button reb-hero-button-secondary hidden"
+                              className="reb-hero-button reb-hero-button-secondary"
                               onClick={openVideo}
+                              whileHover={{ y: -1 }}
+                              whileTap={{ scale: 0.97 }}
+                              transition={{ type: "spring", stiffness: 420, damping: 28 }}
                             >
                               <span>{hero.secondaryCta}</span>
                               <HeroPlayIcon />
-                            </button>
+                            </motion.button>
                           </div>
                           <div className="reb-hero-buttons-line" aria-hidden="true" />
                         </motion.div>
                       </motion.div>
+                    </motion.div>
                     </div>
                   </div>
 
@@ -248,67 +342,46 @@ export function HeroSection() {
         <div className="reb-center-wrapper-inner">
           <section className="reb-home-video-section" aria-label="Lexroom product video">
             <motion.div
-              className={`reb-hero-video-wrapper${isOpen ? " is-open" : ""}`}
+              className={cn(
+                "reb-hero-video-wrapper",
+                isOpen && "reb-hero-video-wrapper--inline-ghost",
+              )}
               style={
                 isOpen
                   ? undefined
                   : {
-                      scale: videoScale,
-                      y: videoY,
+                      transform: videoTransform,
                     }
               }
             >
-              <button
-                type="button"
-                className="reb-hero-video-transparent-cover"
-                aria-label="Play Lexroom video"
-                onClick={openVideo}
-              >
-                <span className="reb-hero-magnetic-arrow-wrapper" aria-hidden="true">
-                  <span ref={magneticRef} className="reb-hero-magnetic-play">
-                    <Image
-                      src={siteConfig.assets.videoPlay}
-                      alt=""
-                      width={88}
-                      height={88}
-                      className="reb-hero-magnetic-arrow"
-                    />
-                  </span>
-                </span>
-              </button>
+              {!isOpen ? (
+                <>
+                  <button
+                    type="button"
+                    className="reb-hero-video-transparent-cover"
+                    aria-label="Play Lexroom video"
+                    onClick={openVideo}
+                  >
+                    <span className="reb-hero-magnetic-arrow-wrapper" aria-hidden="true">
+                      <MagneticPlayArrow
+                        playSrc={siteConfig.assets.videoPlay}
+                        width={88}
+                        height={88}
+                        className="reb-hero-magnetic-play"
+                      />
+                    </span>
+                  </button>
 
-              <Image
-                src={siteConfig.assets.videoCover}
-                alt="Lexroom product preview"
-                width={960}
-                height={540}
-                className="reb-hero-video-cover"
-                priority
-              />
-
-              <div className="vimeo-container">
-                {iframeSrc ? (
-                  <iframe
-                    id="vimeo-player"
-                    src={iframeSrc}
-                    title="Lexroom product video"
-                    allow="autoplay; fullscreen; picture-in-picture"
-                    allowFullScreen
+                  <Image
+                    src={siteConfig.assets.videoCover}
+                    alt="Lexroom product preview"
+                    width={960}
+                    height={540}
+                    className="reb-hero-video-cover"
+                    priority
                   />
-                ) : null}
-              </div>
-
-              <button
-                type="button"
-                className="video-close-btn"
-                aria-label="Close video"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  closeVideo();
-                }}
-              >
-                <span aria-hidden="true">×</span>
-              </button>
+                </>
+              ) : null}
             </motion.div>
           </section>
 
@@ -333,13 +406,7 @@ export function HeroSection() {
           </section>
         </div>
       </div>
-
-      <button
-        type="button"
-        className={`video-backdrop${backdropVisible ? " is-visible" : ""}`}
-        aria-label="Close video"
-        onClick={closeVideo}
-      />
     </div>
+  </div>
   );
 }
